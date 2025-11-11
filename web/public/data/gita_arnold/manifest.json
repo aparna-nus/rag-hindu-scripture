@@ -1,0 +1,10 @@
+{
+  "count": 2436,
+  "dim": 384,
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "files": [
+    "bg_arnold.jsonl"
+  ],
+  "combined_chunks": "chunks.jsonl",
+  "embeddings_bin": "embeddings.f16.bin"
+}

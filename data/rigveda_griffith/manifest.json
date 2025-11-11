@@ -1,0 +1,20 @@
+{
+  "count": 10562,
+  "dim": 384,
+  "model": "sentence-transformers/all-MiniLM-L6-v2",
+  "files": [
+    "rv_book01.jsonl",
+    "rv_book02.jsonl",
+    "rv_book03.jsonl",
+    "rv_book04.jsonl",
+    "rv_book05.jsonl",
+    "rv_book06.jsonl",
+    "rv_book07.jsonl",
+    "rv_book08.jsonl",
+    "rv_book09.jsonl",
+    "rv_book10.jsonl",
+    "rv_book11.jsonl"
+  ],
+  "combined_chunks": "chunks.jsonl",
+  "embeddings_bin": "embeddings.f16.bin"
+}

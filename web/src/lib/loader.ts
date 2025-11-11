@@ -1,30 +1,34 @@
 import type { Manifest, ShardData, Chunk } from "./types";
 
-const BASE = "/data"; // served from web/public/data via sync script
+const BASE = (import.meta.env.BASE_URL || "/").replace(/\/+$/, "");
+const url = (p: string) => `${BASE}/${p.replace(/^\/+/, "")}`;
 
-async function fetchText(url: string) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed ${url}`);
+async function fetchText(u: string) {
+  const res = await fetch(u);
+  if (!res.ok) throw new Error(`Fetch failed ${u}`);
   return await res.text();
 }
-
-async function fetchJSON<T>(url: string): Promise<T> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed ${url}`);
+async function fetchJSON<T>(u: string): Promise<T> {
+  const res = await fetch(u);
+  if (!res.ok) throw new Error(`Fetch failed ${u}`);
   return await res.json();
 }
-
-async function fetchBin(url: string): Promise<ArrayBuffer> {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Fetch failed ${url}`);
+async function fetchBin(u: string): Promise<ArrayBuffer> {
+  const res = await fetch(u);
+  if (!res.ok) throw new Error(`Fetch failed ${u}`);
   return await res.arrayBuffer();
 }
 
 export async function loadShard(name: string): Promise<ShardData> {
-  const root = `${BASE}/${name}`;
-  const manifest = await fetchJSON<Manifest>(`${root}/manifest.json`);
-  const chunksPath = `${root}/${manifest.combined_chunks}`;
-  const embPath    = `${root}/${manifest.embeddings_bin}`;
+  // shard files live under public/data/<name>/
+  const root = url(`data/${name}`);
+
+  // manifest.json is in that folder
+  const manifest = await fetchJSON<Manifest>(url(`data/${name}/manifest.json`));
+
+  // these are relative filenames inside the same folder
+  const chunksPath = url(`data/${name}/${manifest.combined_chunks}`);
+  const embPath    = url(`data/${name}/${manifest.embeddings_bin}`);
 
   // load records
   const raw = await fetchText(chunksPath);
@@ -37,14 +41,10 @@ export async function loadShard(name: string): Promise<ShardData> {
     records.push(obj);
   }
 
-  // load embeddings (float16) and view as float32
+  // load embeddings (float16) → float32
   const ab = await fetchBin(embPath);
-  const f16 = new Uint16Array(ab); // raw half floats
-  // convert f16 -> f32 (approx; faster than full IEEE half parse)
-  // We assume embeddings were L2-normalized already; “good enough” for cosine via dot.
-  // Simple table-based converter could be added; here use a tiny float16->float32 helper:
+  const f16 = new Uint16Array(ab);
   function halfToFloat(h: number): number {
-    // reference https://stackoverflow.com/a/56728174
     const s = (h & 0x8000) >> 15;
     const e = (h & 0x7C00) >> 10;
     const f = h & 0x03FF;
